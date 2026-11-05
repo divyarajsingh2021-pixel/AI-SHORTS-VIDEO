@@ -15,7 +15,10 @@ tts:
   sample_rate: 24000
 
 whisper:
-  model_snapshot: "C:\\Users\\hp\\.cache\\huggingface\\hub\\models--Systran--faster-whisper-tiny\\snapshots\\d90ca5fe260221311c53c58e660288d3deb8d356"
+  # Set to "auto" or leave blank to let faster-whisper download the model automatically.
+  # To use a local snapshot: set the full path to your snapshot directory, e.g.:
+  # model_snapshot: "C:/path/to/models--Systran--faster-whisper-tiny/snapshots/<hash>"
+  model_snapshot: "tiny"
   device: "cpu"
   compute_type: "int8"
 
