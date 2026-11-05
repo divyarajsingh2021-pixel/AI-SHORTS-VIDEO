@@ -1,0 +1,47 @@
+# Configuration for 1:1 Visual Match AI Shorts Generator
+video:
+  width: 1080
+  height: 1920
+  fps: 30
+  preview_width: 540
+  preview_height: 960
+  crossfade_duration: 0.2
+  min_shot_duration: 1.5
+  max_shot_duration: 3.5
+
+tts:
+  default_voice: "hi-IN-MadhurNeural"
+  default_speed: 1.15
+  sample_rate: 24000
+
+whisper:
+  model_snapshot: "C:\\Users\\hp\\.cache\\huggingface\\hub\\models--Systran--faster-whisper-tiny\\snapshots\\d90ca5fe260221311c53c58e660288d3deb8d356"
+  device: "cpu"
+  compute_type: "int8"
+
+micro_shots:
+  min_words: 4
+  max_words: 9
+  ollama_model: "qwen2.5:1.5b"
+  ollama_url: "http://127.0.0.1:11434"
+  ollama_timeout: 10
+  fallback_to_rules: true
+
+visuals:
+  engine_primary: "pollinations"
+  engine_fallback: "unsplash"
+  engine_last_resort: "gradient_card"
+  cache_dir: "assets/visual_cache"
+  clip_threshold: 0.24
+  max_regeneration_attempts: 2
+  fixed_seed_per_video: true
+
+subtitles:
+  font_name: "Nirmala UI"
+  font_size: 75
+  karaoke_enabled: true
+  words_per_line: 4
+  primary_color: "&H00FFFFFF"
+  highlight_color: "&H0000FFFF"  # Yellow highlight
+  outline_color: "&H00000000"
+  outline_width: 3

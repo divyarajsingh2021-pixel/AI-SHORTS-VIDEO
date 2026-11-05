@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual env
+venv/
+.env
+
+# IDE / editor
+.vscode/
+.idea/
+*.swp
+
+# Logs / temporary files
+*.log
+*.tmp
+
+# Distribution / build
+build/
+*.egg-info/
+
+# Assets generated at runtime
+assets/visual_cache/
+
+# Output files
+output/

@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Free Custom AI Shorts Generator | 1:1 Visual Match</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="stylesheet" href="/style.css">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#fff1f2',
+              500: '#f43f5e',
+              600: '#e11d48',
+              700: '#be123c',
+              yellow: '#FACC15',
+              cyan: '#06B6D4'
+            }
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-[#0b0f17] text-gray-100 min-h-screen font-sans antialiased selection:bg-rose-500 selection:text-white">
+
+  <!-- Header -->
+  <header class="border-b border-gray-800/80 bg-[#0d121f]/90 backdrop-blur sticky top-0 z-50 px-6 py-3.5 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-rose-500 via-amber-500 to-cyan-400 p-0.5 shadow-lg shadow-rose-500/20">
+        <div class="w-full h-full bg-[#0b0f17] rounded-[10px] flex items-center justify-center">
+          <i data-lucide="video" class="w-5 h-5 text-rose-400"></i>
+        </div>
+      </div>
+      <div>
+        <h1 class="text-lg font-bold tracking-tight bg-gradient-to-r from-white via-gray-200 to-gray-400 bg-clip-text text-transparent">
+          AI SHORTS STUDIO <span class="text-xs px-2 py-0.5 ml-2 rounded-full font-semibold uppercase tracking-wider bg-rose-500/10 text-rose-400 border border-rose-500/30">1:1 Visual Match</span>
+        </h1>
+        <p class="text-xs text-gray-400">100% Free • Edge-TTS • Faster-Whisper • Pollinations FLUX • FFmpeg Engine</p>
+      </div>
+    </div>
+    
+    <div class="flex items-center gap-3">
+      <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+        Zero API Key Required
+      </span>
+    </div>
+  </header>
+
+  <!-- Main Content Layout -->
+  <main class="max-w-[1700px] mx-auto p-6 grid grid-cols-1 xl:grid-cols-12 gap-6">
+
+    <!-- LEFT COLUMN: SCRIPT & CONFIGURATION (5 Cols) -->
+    <div class="xl:col-span-5 space-y-6">
+
+      <!-- Preset or Custom Selector Card -->
+      <div class="bg-[#121826] border border-gray-800/90 rounded-2xl p-5 shadow-xl space-y-4">
+        <div class="flex items-center justify-between border-b border-gray-800 pb-3">
+          <div class="flex items-center gap-2">
+            <i data-lucide="sparkles" class="w-5 h-5 text-amber-400"></i>
+            <h2 class="font-semibold text-base text-gray-200">1. Script & Story Concept</h2>
+          </div>
+          <span class="text-xs text-gray-400">Step 1 of 3</span>
+        </div>
+
+        <div>
+          <label class="block text-xs font-medium text-gray-400 mb-2">Select Viral Preset or Write Custom</label>
+          <div class="grid grid-cols-2 gap-2" id="preset-buttons">
+            <!-- Populated via JS -->
+          </div>
+        </div>
+
+        <div>
+          <div class="flex justify-between items-center mb-1.5">
+            <label class="text-xs font-medium text-gray-300">Script Text (Sentence-by-Sentence Breakdown)</label>
+            <span class="text-[11px] text-gray-500" id="word-count">0 words</span>
+          </div>
+          <textarea id="script-input" rows="7" 
+            class="w-full bg-[#0a0d14] border border-gray-700/80 rounded-xl p-3.5 text-sm text-gray-200 focus:outline-none focus:border-rose-500 focus:ring-1 focus:ring-rose-500 transition placeholder-gray-600 resize-none leading-relaxed"
+            placeholder="Type or paste your short script here. Each sentence will automatically generate a 1:1 visually matched scene..."></textarea>
+        </div>
+
+        <button id="btn-parse-script" class="w-full py-2.5 px-4 bg-gray-800 hover:bg-gray-700 text-gray-200 rounded-xl text-sm font-medium transition flex items-center justify-center gap-2 border border-gray-700/60 shadow">
+          <i data-lucide="layers" class="w-4 h-4 text-cyan-400"></i>
+          Update 1:1 Storyboard Scenes
+        </button>
+      </div>
+
+      <!-- Video & Audio Controls Card -->
+      <div class="bg-[#121826] border border-gray-800/90 rounded-2xl p-5 shadow-xl space-y-4">
+        <div class="flex items-center justify-between border-b border-gray-800 pb-3">
+          <div class="flex items-center gap-2">
+            <i data-lucide="sliders" class="w-5 h-5 text-rose-400"></i>
+            <h2 class="font-semibold text-base text-gray-200">2. Style & Engine Settings</h2>
+          </div>
+          <span class="text-xs text-gray-400">Step 2 of 3</span>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <!-- Voice -->
+          <div>
+            <label class="block text-xs font-medium text-gray-400 mb-1.5">Voiceover (Edge-TTS)</label>
+            <select id="voice-select" class="w-full bg-[#0a0d14] border border-gray-700/80 rounded-xl px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-rose-500">
+              <!-- Populated via JS -->
+            </select>
+          </div>
+
+          <!-- Voice Playback Speed -->
+          <div>
+            <label class="block text-xs font-medium text-cyan-400 mb-1.5 flex items-center gap-1">
+              <i data-lucide="gauge" class="w-3.5 h-3.5"></i> Playback Speed
+            </label>
+            <select id="voice-speed-select" class="w-full bg-[#0a0d14] border border-cyan-500/40 rounded-xl px-3 py-2 text-sm text-cyan-200 focus:outline-none focus:border-cyan-400">
+              <option value="-10%">0.9x - Deep & Dramatic</option>
+              <option value="+0%">1.0x - Normal Speed</option>
+              <option value="+10%">1.1x - Brisk & Engaging</option>
+              <option value="+15%" selected>1.15x - Viral Shorts (Recommended)</option>
+              <option value="+25%">1.25x - High-Energy Hype</option>
+            </select>
+          </div>
+
+          <!-- Background Music -->
+          <div>
+            <label class="block text-xs font-medium text-gray-400 mb-1.5">Background Music</label>
+            <select id="music-select" class="w-full bg-[#0a0d14] border border-gray-700/80 rounded-xl px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-rose-500">
+              <option value="ambient_chill">Ambient Chill Drone</option>
+              <option value="none">No Background Music</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Focused Visual Art Style Selector -->
+        <div>
+          <label class="block text-xs font-medium text-amber-400 mb-1.5 flex items-center gap-1.5">
+            <i data-lucide="palette" class="w-4 h-4"></i> Focused 1:1 Visual Art Style
+          </label>
+          <select id="visual-style-select" class="w-full bg-[#0a0d14] border border-amber-500/50 rounded-xl px-3.5 py-2.5 text-sm text-amber-200 focus:outline-none focus:border-amber-400 font-medium">
+            <option value="cinematic" selected>🎬 Cinematic Hyperrealism (Arri Alexa 35mm Movie Film)</option>
+            <option value="dark_academia">🏛️ Stoic Dark Noir & Chiaroscuro (Moody Shadows & Gold Accent)</option>
+            <option value="cosmic_scifi">🌌 Cosmic Sci-Fi & Cyberpunk (Volumetric Neon & Celestial Vistas)</option>
+            <option value="documentary">📜 Gritty Historical Archive (National Geographic Textured Realism)</option>
+            <option value="anime_epic">⚡ Anime Masterpiece (Makoto Shinkai Vibrant Celestial Aesthetic)</option>
+          </select>
+        </div>
+
+        <!-- Subtitle Style Picker -->
+        <div>
+          <label class="block text-xs font-medium text-gray-400 mb-2">Subtitles Style (Karaoke Pop)</label>
+          <div class="grid grid-cols-2 gap-2.5" id="subtitle-style-picker">
+            <label class="relative flex items-center p-3 rounded-xl border border-rose-500/60 bg-rose-500/10 cursor-pointer transition">
+              <input type="radio" name="sub_style" value="hormozi" checked class="sr-only">
+              <div class="flex items-center gap-2">
+                <span class="w-3 h-3 rounded-full border-2 border-rose-500 flex items-center justify-center"><span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span></span>
+                <div>
+                  <div class="text-xs font-bold text-yellow-300">VIRAL HORMOZI</div>
+                  <div class="text-[10px] text-gray-400">Bright Yellow Word Highlight</div>
+                </div>
+              </div>
+            </label>
+
+            <label class="relative flex items-center p-3 rounded-xl border border-gray-800 bg-[#0a0d14] hover:border-gray-700 cursor-pointer transition">
+              <input type="radio" name="sub_style" value="cyber_neon" class="sr-only">
+              <div class="flex items-center gap-2">
+                <span class="w-3 h-3 rounded-full border-2 border-gray-600 flex items-center justify-center"></span>
+                <div>
+                  <div class="text-xs font-bold text-cyan-400">CYBER NEON</div>
+                  <div class="text-[10px] text-gray-400">Glowing Cyan & White</div>
+                </div>
+              </div>
+            </label>
+
+            <label class="relative flex items-center p-3 rounded-xl border border-gray-800 bg-[#0a0d14] hover:border-gray-700 cursor-pointer transition">
+              <input type="radio" name="sub_style" value="crimson_pop" class="sr-only">
+              <div class="flex items-center gap-2">
+                <span class="w-3 h-3 rounded-full border-2 border-gray-600 flex items-center justify-center"></span>
+                <div>
+                  <div class="text-xs font-bold text-rose-400">CRIMSON POP</div>
+                  <div class="text-[10px] text-gray-400">Punchy Red Accent</div>
+                </div>
+              </div>
+            </label>
+
+            <label class="relative flex items-center p-3 rounded-xl border border-gray-800 bg-[#0a0d14] hover:border-gray-700 cursor-pointer transition">
+              <input type="radio" name="sub_style" value="emerald" class="sr-only">
+              <div class="flex items-center gap-2">
+                <span class="w-3 h-3 rounded-full border-2 border-gray-600 flex items-center justify-center"></span>
+                <div>
+                  <div class="text-xs font-bold text-amber-300">EMERALD GOLD</div>
+                  <div class="text-[10px] text-gray-400">Luxury High-End Serif</div>
+                </div>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <!-- Video Layout Selector -->
+        <div>
+          <label class="block text-xs font-medium text-gray-400 mb-2">Video Layout (9:16 Vertical)</label>
+          <div class="grid grid-cols-2 gap-3">
+            <button type="button" id="btn-layout-fullscreen" class="p-3 rounded-xl border border-rose-500 bg-rose-500/10 text-left transition flex items-start gap-3">
+              <i data-lucide="maximize" class="w-5 h-5 text-rose-400 mt-0.5"></i>
+              <div>
+                <div class="text-xs font-bold text-white">Full-Screen 1:1 Match</div>
+                <div class="text-[10px] text-gray-400">100% Cinematic AI visual with Ken Burns dynamic motion</div>
+              </div>
+            </button>
+
+            <button type="button" id="btn-layout-split" class="p-3 rounded-xl border border-gray-800 bg-[#0a0d14] text-left hover:border-gray-700 transition flex items-start gap-3">
+              <i data-lucide="columns-2" class="w-5 h-5 text-gray-400 mt-0.5"></i>
+              <div>
+                <div class="text-xs font-bold text-gray-300">Viral Split-Screen</div>
+                <div class="text-[10px] text-gray-400">Top: AI 1:1 Visual / Bottom: Hypnotic satisfying gameplay</div>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        <!-- Action Generate Button -->
+        <div class="pt-2">
+          <button id="btn-render-all" class="w-full py-4 px-6 rounded-xl bg-gradient-to-r from-rose-600 via-rose-500 to-amber-500 hover:from-rose-500 hover:to-amber-400 text-white font-bold text-base shadow-lg shadow-rose-600/30 flex items-center justify-center gap-2 transition transform active:scale-[0.98]">
+            <i data-lucide="zap" class="w-5 h-5"></i>
+            GENERATE 1:1 MATCHED SHORT
+          </button>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- RIGHT COLUMN: 1:1 STORYBOARD & RENDER PREVIEW (7 Cols) -->
+    <div class="xl:col-span-7 space-y-6">
+
+      <!-- Progress / Render Status Banner (Hidden by default) -->
+      <div id="render-status-card" class="hidden bg-[#121826] border border-rose-500/40 rounded-2xl p-5 shadow-2xl space-y-3">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="w-6 h-6 border-2 border-rose-500 border-t-transparent rounded-full animate-spin"></div>
+            <div>
+              <div id="status-title" class="font-bold text-sm text-white">Rendering In Progress...</div>
+              <div id="status-desc" class="text-xs text-gray-400">Synthesizing audio and visual elements</div>
+            </div>
+          </div>
+          <span id="status-percent" class="text-base font-black text-rose-400">0%</span>
+        </div>
+        <div class="w-full bg-gray-800 h-2.5 rounded-full overflow-hidden">
+          <div id="status-progress-bar" class="bg-gradient-to-r from-rose-500 to-amber-400 h-full w-0 transition-all duration-300"></div>
+        </div>
+      </div>
+
+      <!-- Result Video Card (Hidden until ready) -->
+      <div id="result-video-card" class="hidden bg-[#121826] border border-emerald-500/40 rounded-2xl p-6 shadow-2xl">
+        <div class="flex items-center justify-between border-b border-gray-800 pb-3 mb-4">
+          <div class="flex items-center gap-2">
+            <i data-lucide="check-circle" class="w-5 h-5 text-emerald-400"></i>
+            <h2 class="font-bold text-base text-white">Your Short is Ready!</h2>
+          </div>
+          <a id="btn-download-video" href="#" download="AI_Short.mp4" class="px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold flex items-center gap-1.5 transition">
+            <i data-lucide="download" class="w-4 h-4"></i>
+            Download MP4
+          </a>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
+          <!-- Video Player -->
+          <div class="md:col-span-5 flex justify-center bg-black/60 rounded-xl p-2 border border-gray-800">
+            <video id="player-video" controls class="rounded-lg max-h-[460px] shadow-2xl aspect-[9/16] object-cover bg-black"></video>
+          </div>
+
+          <!-- YouTube Shorts SEO Metadata Box -->
+          <div class="md:col-span-7 space-y-3">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-gray-400">YouTube Shorts & TikTok Metadata</h3>
+            
+            <div>
+              <label class="text-[11px] text-gray-400">Viral Title</label>
+              <div class="flex gap-2 mt-1">
+                <input id="meta-title" readonly class="w-full bg-[#0a0d14] border border-gray-700 text-xs text-gray-200 rounded-lg px-2.5 py-2">
+                <button onclick="copyMeta('meta-title')" class="px-2.5 py-1.5 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-lg text-xs font-medium">Copy</button>
+              </div>
+            </div>
+
+            <div>
+              <label class="text-[11px] text-gray-400">Description & Tags</label>
+              <div class="flex flex-col gap-2 mt-1">
+                <textarea id="meta-desc" rows="5" readonly class="w-full bg-[#0a0d14] border border-gray-700 text-xs text-gray-200 rounded-lg p-2.5 resize-none"></textarea>
+                <button onclick="copyMeta('meta-desc')" class="self-end px-3 py-1.5 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-lg text-xs font-medium">Copy Description</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 1:1 Storyboard Deck -->
+      <div class="bg-[#121826] border border-gray-800/90 rounded-2xl p-5 shadow-xl space-y-4">
+        <div class="flex items-center justify-between border-b border-gray-800 pb-3">
+          <div class="flex items-center gap-2">
+            <i data-lucide="clapperboard" class="w-5 h-5 text-cyan-400"></i>
+            <h2 class="font-semibold text-base text-gray-200">1:1 Matched Storyboard Timeline</h2>
+          </div>
+          <div class="flex items-center gap-2">
+            <button id="btn-preview-visuals" class="px-3 py-1 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition">
+              <i data-lucide="eye" class="w-3.5 h-3.5"></i>
+              Focus & Preview 1:1 Visuals
+            </button>
+            <span id="scene-counter-badge" class="text-xs px-2.5 py-0.5 rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 font-medium">5 Scenes</span>
+          </div>
+        </div>
+
+        <p class="text-xs text-gray-400">
+          Each scene below pairs the spoken audio line 1:1 with a tailored 9:16 visual prompt. You can customize any prompt or camera motion before rendering!
+        </p>
+
+        <!-- Scene Cards Container -->
+        <div id="scenes-container" class="space-y-3.5">
+          <!-- Dynamically populated scene cards -->
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <script src="/app.js"></script>
+</body>
+</html>
