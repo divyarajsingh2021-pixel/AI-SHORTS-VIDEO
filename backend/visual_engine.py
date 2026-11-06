@@ -2,10 +2,9 @@
 Visual Engine & Match Verification.
 Multi-tier visual generation:
 1. Pollinations AI (free, no key, 9:16 vertical 540x960 instant high-res)
-2. Wikimedia Commons authentic photo fetch fallback
-3. Procedural styled gradient cards with Devanagari-aware typography as last resort
+2. Wikimedia Commons authentic photo fetch with vertical smart-crop fallback
+3. Procedural styled gradient cards with Devanagari typography as emergency fallback
 4. Automatic multilingual prompt translation (Hindi/Devanagari to English)
-   so diffusion models get concrete physical descriptions.
 """
 
 import os
@@ -13,6 +12,7 @@ import hashlib
 import urllib.parse
 import urllib.request
 import json
+import io
 import time
 from typing import List, Tuple, Dict, Any, Optional
 from PIL import Image, ImageDraw, ImageFont
@@ -35,7 +35,6 @@ def translate_to_english(text: str) -> str:
     """Translates non-ASCII / Hindi text to English for diffusion models."""
     if not text:
         return ""
-    # If all ASCII, already English
     if all(ord(c) < 128 for c in text):
         return text
     try:
@@ -69,10 +68,7 @@ def generate_shot_visual(
     """Generates image for a shot with caching and multi-tier fallbacks.
     Returns: (success: bool, source_type: str)
     """
-    # Translate prompt if it contains Hindi or non-ASCII characters
     english_prompt = translate_to_english(prompt)
-    
-    # Pollinations free tier supports up to 540x960 without 402 payment error
     fetch_w = min(width, 540)
     fetch_h = min(height, 960)
 
@@ -104,21 +100,18 @@ def generate_shot_visual(
             _save_to_cache(output_path, cached_file)
             _SESSION_USED_HASHES.add(h)
             return True, "pollinations"
-        # Duplicate image: retry with different seed
-        for retry in range(1, 3):
-            new_seed = seed + retry * 77
-            success = _fetch_pollinations(english_prompt, output_path, new_seed, fetch_w, fetch_h)
-            if success:
-                h = _file_hash(output_path)
-                if h and h not in _SESSION_USED_HASHES:
-                    _save_to_cache(output_path, cached_file)
-                    _SESSION_USED_HASHES.add(h)
-                    return True, "pollinations"
 
-    # 3. Tier 2: Wikimedia Commons authentic photo fallback
-    kw_query = " ".join(keywords) if keywords else english_prompt[:60]
+    # 3. Tier 2: Wikimedia Commons authentic high-res photography fallback
+    kw_candidates = []
+    if keywords:
+        kw_candidates.extend(keywords)
+    # Extract nouns from english_prompt
+    kw_candidates.extend([w for w in english_prompt.replace(",", " ").split() if len(w) > 3][:4])
+    
+    kw_query = " ".join(kw_candidates[:3])
     kw_query = translate_to_english(kw_query)
-    success = _fetch_wikimedia(kw_query, output_path)
+    
+    success = _fetch_wikimedia(kw_query, output_path, fetch_w, fetch_h)
     if success:
         h = _file_hash(output_path)
         if h and h not in _SESSION_USED_HASHES:
@@ -126,7 +119,7 @@ def generate_shot_visual(
             _SESSION_USED_HASHES.add(h)
             return True, "wikimedia"
 
-    # 4. Tier 3: High-Quality Procedural Kinetic Gradient Card
+    # 4. Tier 3: Procedural Kinetic Gradient Card
     success = _create_gradient_card(prompt, keywords or ["Scene"], output_path, fetch_w, fetch_h, shot_id)
     return success, "gradient_card"
 
@@ -143,16 +136,18 @@ def _fetch_pollinations(prompt: str, output_path: str, seed: int, width: int, he
     """Fetches vertical AI image from Pollinations. Keeps within free dimensions."""
     try:
         clean_prompt = prompt.replace("\n", " ").strip()
-        # Truncate prompt if overly long to prevent URL overflow
-        if len(clean_prompt) > 300:
-            clean_prompt = clean_prompt[:300]
+        if len(clean_prompt) > 280:
+            clean_prompt = clean_prompt[:280]
         encoded = urllib.parse.quote(clean_prompt)
         url = f"https://image.pollinations.ai/prompt/{encoded}?width={width}&height={height}&nologo=true&seed={seed}"
         req = urllib.request.Request(
             url,
-            headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AI-Shorts-Bot/2.0"}
+            headers={
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                "Accept": "image/avif,image/webp,image/apng,image/*,*/*;q=0.8"
+            }
         )
-        with urllib.request.urlopen(req, timeout=25) as response:
+        with urllib.request.urlopen(req, timeout=30) as response:
             content = response.read()
             if len(content) > 10000:
                 with open(output_path, "wb") as f:
@@ -164,35 +159,64 @@ def _fetch_pollinations(prompt: str, output_path: str, seed: int, width: int, he
     return False
 
 
-def _fetch_wikimedia(query: str, output_path: str) -> bool:
-    """Searches Wikimedia Commons for authentic, high-res CC-licensed subject images."""
+def _fetch_wikimedia(query: str, output_path: str, target_w: int = 540, target_h: int = 960) -> bool:
+    """Searches Wikimedia Commons for authentic, high-res photos and crops to vertical 9:16."""
     try:
-        # Extract main nouns for clean search
-        clean_q = " ".join([w for w in query.split() if len(w) > 3][:3])
+        clean_q = " ".join([w for w in query.replace(",", " ").split() if len(w) > 2][:3])
         if not clean_q:
             return False
+            
         url = (
             f"https://commons.wikimedia.org/w/api.php?action=query&generator=search"
-            f"&gsrnamespace=6&gsrsearch={urllib.parse.quote(clean_q)}&gsrlimit=3"
+            f"&gsrnamespace=6&gsrsearch={urllib.parse.quote(clean_q)}&gsrlimit=6"
             f"&prop=imageinfo&iiprop=url&format=json"
         )
-        req = urllib.request.Request(url, headers={"User-Agent": "AIShortsEngine/2.0"})
+        req = urllib.request.Request(url, headers={
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        })
         with urllib.request.urlopen(req, timeout=8) as res:
             data = json.loads(res.read().decode("utf-8"))
-            pages = data.get("query", {}).get("pages", {})
-            for _, val in pages.items():
-                img_info = val.get("imageinfo", [{}])[0]
-                img_url = img_info.get("url")
-                if img_url and (img_url.endswith(".jpg") or img_url.endswith(".jpeg") or img_url.endswith(".png")):
-                    img_req = urllib.request.Request(img_url, headers={"User-Agent": "Mozilla/5.0"})
-                    with urllib.request.urlopen(img_req, timeout=10) as img_res:
-                        data = img_res.read()
-                        if len(data) > 15000:
-                            with open(output_path, "wb") as f:
-                                f.write(data)
+            
+        pages = data.get("query", {}).get("pages", {})
+        for _, val in pages.items():
+            img_info = val.get("imageinfo", [{}])[0]
+            raw_url = img_info.get("url", "")
+            img_url = raw_url.split("?")[0]
+            
+            if any(img_url.lower().endswith(ext) for ext in [".jpg", ".jpeg", ".png", ".webp"]):
+                img_req = urllib.request.Request(raw_url, headers={
+                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                    "Referer": "https://commons.wikimedia.org/"
+                })
+                try:
+                    with urllib.request.urlopen(img_req, timeout=12) as img_res:
+                        img_bytes = img_res.read()
+                        if len(img_bytes) > 10000:
+                            img = Image.open(io.BytesIO(img_bytes)).convert("RGB")
+                            
+                            # Smart Center-Crop to 9:16 vertical ratio
+                            w, h = img.size
+                            target_ratio = target_w / target_h
+                            current_ratio = w / h
+                            
+                            if current_ratio > target_ratio:
+                                # Wider than 9:16, crop sides
+                                new_w = int(h * target_ratio)
+                                left = (w - new_w) // 2
+                                img_cropped = img.crop((left, 0, left + new_w, h))
+                            else:
+                                # Taller than 9:16, crop top/bottom
+                                new_h = int(w / target_ratio)
+                                top = (h - new_h) // 2
+                                img_cropped = img.crop((0, top, w, top + new_h))
+                                
+                            img_resized = img_cropped.resize((target_w, target_h), Image.Resampling.LANCZOS)
+                            img_resized.save(output_path, "JPEG", quality=90)
                             return True
-    except Exception:
-        pass
+                except Exception:
+                    continue
+    except Exception as e:
+        print(f"[VisualEngine] Wikimedia notice: {e}")
     return False
 
 
@@ -204,7 +228,7 @@ def _create_gradient_card(
     height: int,
     shot_id: int,
 ) -> bool:
-    """Creates a sleek, modern vertical gradient background with key terms."""
+    """Creates a modern vertical gradient background with key terms."""
     try:
         palettes = [
             ((20, 24, 40), (80, 20, 90)),
@@ -222,7 +246,6 @@ def _create_gradient_card(
             b = int(c1[2] * (1 - ratio) + c2[2] * ratio)
             draw.line([(0, y), (width, y)], fill=(r, g, b))
 
-        # Try fonts that support Devanagari/Hindi, then fall back to Arial
         font_candidates = [
             "C:\\Windows\\Fonts\\NirmalaUI.ttf",
             "C:\\Windows\\Fonts\\Mangal.ttf",
@@ -239,7 +262,6 @@ def _create_gradient_card(
         if font is None:
             font = ImageFont.load_default()
 
-        # Display keywords or clean prompt snippet
         display_words = " • ".join(keywords[:3]) if keywords else prompt[:30]
         draw.text((width // 2, height // 2 - 20), display_words, fill=(255, 215, 0), font=font, anchor="mm")
         img.save(output_path, "JPEG", quality=90)
@@ -254,9 +276,7 @@ def verify_visual_match(
     narration_text: str,
     keywords: List[str]
 ) -> Tuple[float, List[str]]:
-    """Computes visual match score and keyword detection hits.
-    Returns: (match_score: float [0.0 - 1.0], hit_keywords: List[str])
-    """
+    """Computes visual match score and keyword detection hits."""
     if not os.path.exists(image_path) or os.path.getsize(image_path) < 5000:
         return 0.0, []
     hits = []

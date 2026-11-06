@@ -112,6 +112,8 @@ def preview_visuals(req: PreviewVisualsRequest):
         idx = i + 1
         img_path = session_dir / f"scene_{idx:02d}.jpg"
         if not img_path.exists():
+            if i > 0:
+                time.sleep(0.8)
             generate_shot_visual(
                 prompt=sc["visual_prompt"],
                 output_path=str(img_path),
@@ -133,12 +135,19 @@ def regenerate_scene_visual(req: RegenerateVisualRequest):
     session_dir = OUTPUT_DIR / req.session_id
     session_dir.mkdir(parents=True, exist_ok=True)
     img_path = session_dir / f"scene_{req.scene_id:02d}.jpg"
+    if img_path.exists():
+        try:
+            img_path.unlink()
+        except Exception:
+            pass
 
     new_seed = int(uuid.uuid4().int % 100000)
     generate_shot_visual(
         prompt=req.prompt,
         output_path=str(img_path),
         seed=new_seed,
+        width=540,
+        height=960,
         shot_id=req.scene_id
     )
 
