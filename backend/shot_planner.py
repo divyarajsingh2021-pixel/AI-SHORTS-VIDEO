@@ -11,6 +11,7 @@ import json
 import urllib.request
 import re
 from pydantic import BaseModel, Field
+from visual_engine import translate_to_english
 
 class MicroShot(BaseModel):
     shot_id: int
@@ -82,7 +83,8 @@ def _extract_concrete_keywords(text: str) -> List[str]:
 def _build_rule_based_shot(
     shot_id: int,
     words_slice: List[Dict[str, Any]],
-    art_style: str = "cinematic"
+    art_style: str = "cinematic",
+    scenes: Optional[List[Dict[str, Any]]] = None
 ) -> MicroShot:
     """Fast deterministic generator for micro-shot when LLM is slow or offline."""
     narration = " ".join(w["word"] for w in words_slice)
@@ -91,22 +93,37 @@ def _build_rule_based_shot(
     start_idx = words_slice[0]["index"]
     end_idx = words_slice[-1]["index"]
     
+    # 1. Check if words match an existing scene prompt
+    scene_prompt = None
+    if scenes:
+        for sc in scenes:
+            sc_text = sc.get("text", "").lower()
+            # If any word from words_slice is in scene text
+            matching_words = [w["word"].lower() for w in words_slice if len(w["word"]) > 2 and w["word"].lower() in sc_text]
+            if len(matching_words) >= 2 or (len(words_slice) <= 3 and matching_words):
+                scene_prompt = sc.get("visual_prompt")
+                break
+
     keywords = _extract_concrete_keywords(narration)
     key_word = keywords[0] if keywords else (words_slice[len(words_slice)//2]["word"])
     
-    # Generate concrete visual prompt
-    visual_ideas = []
-    for kw in keywords:
-        if kw in CONCEPT_DICTIONARY:
-            visual_ideas.append(CONCEPT_DICTIONARY[kw])
-            
-    if visual_ideas:
-        base_visual = ", ".join(visual_ideas[:2])
-    else:
-        base_visual = f"Cinematic detailed visual depicting {narration}"
-        
     style_suffix = STYLE_BIBLE.get(art_style, STYLE_BIBLE["cinematic"])
-    final_prompt = f"{base_visual}, {style_suffix}"
+    if scene_prompt:
+        final_prompt = scene_prompt
+    else:
+        # Generate concrete visual prompt
+        visual_ideas = []
+        for kw in keywords:
+            if kw in CONCEPT_DICTIONARY:
+                visual_ideas.append(CONCEPT_DICTIONARY[kw])
+                
+        if visual_ideas:
+            base_visual = ", ".join(visual_ideas[:2])
+        else:
+            en_narration = translate_to_english(narration)
+            base_visual = f"Cinematic detailed visual depicting {en_narration}"
+            
+        final_prompt = f"{base_visual}, {style_suffix}"
     
     # Camera motion alternates to maintain fast TikTok/Shorts pacing
     motions = ["zoom_in", "zoom_out", "pan_right", "zoom_in"]
@@ -137,6 +154,7 @@ def plan_micro_shots(
     try_ollama: bool = False,
     min_shot_duration: float = 2.5,
     max_shot_duration: float = 3.5,
+    scenes: Optional[List[Dict[str, Any]]] = None,
 ) -> List[MicroShot]:
     """
     Groups words from timeline into 5-9 word shots.
@@ -155,7 +173,7 @@ def plan_micro_shots(
         # End chunk if reached target size or sentence boundary
         is_punct = word_info["word"].endswith(('.', '!', '?', '।', '|', ':'))
         if len(current_chunk) >= max_words or (len(current_chunk) >= min_words and is_punct):
-            shots.append(_build_rule_based_shot(len(shots), current_chunk, art_style))
+            shots.append(_build_rule_based_shot(len(shots), current_chunk, art_style, scenes))
             current_chunk = []
 
     if current_chunk:
@@ -163,9 +181,9 @@ def plan_micro_shots(
             # Merge with last shot if too short
             last = shots[-1]
             last_words = timeline[last.start_word_index : current_chunk[-1]["index"] + 1]
-            shots[-1] = _build_rule_based_shot(last.shot_id, last_words, art_style)
+            shots[-1] = _build_rule_based_shot(last.shot_id, last_words, art_style, scenes)
         else:
-            shots.append(_build_rule_based_shot(len(shots), current_chunk, art_style))
+            shots.append(_build_rule_based_shot(len(shots), current_chunk, art_style, scenes))
 
     # Ensure no shot exceeds 3.5s without visual cut; split if needed
     normalized_shots: List[MicroShot] = []

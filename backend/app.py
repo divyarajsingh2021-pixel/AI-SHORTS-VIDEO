@@ -20,7 +20,7 @@ from script_engine import ScriptEngine
 from tts_engine import TTSEngine
 from timeline_engine import build_audio_timeline, save_timeline
 from shot_planner import plan_micro_shots, MicroShot
-from visual_engine import generate_shot_visual, verify_visual_match
+from visual_engine import generate_shot_visual, verify_visual_match, clear_session_hashes
 from subtitle_generator import SubtitleGenerator
 from video_renderer import VideoRenderer
 from sync_report import generate_sync_report
@@ -116,6 +116,8 @@ def preview_visuals(req: PreviewVisualsRequest):
                 prompt=sc["visual_prompt"],
                 output_path=str(img_path),
                 seed=42 + idx,
+                width=540,
+                height=960,
                 keywords=sc.get("keywords", []),
                 shot_id=idx
             )
@@ -149,6 +151,7 @@ def regenerate_scene_visual(req: RegenerateVisualRequest):
 async def render_pipeline(session_id: str, req: GenerateScenesRequest):
     session_dir = OUTPUT_DIR / session_id
     session_dir.mkdir(parents=True, exist_ok=True)
+    clear_session_hashes()
     RENDER_STATUS[session_id] = {"status": "processing", "progress": 5, "message": "Synthesizing voiceover (audio master clock)..."}
 
     try:
@@ -178,7 +181,7 @@ async def render_pipeline(session_id: str, req: GenerateScenesRequest):
             "progress": 35,
             "message": "Planning 1:1 micro-shots & concrete visual ideas..."
         }
-        shots = plan_micro_shots(timeline, art_style=req.visual_style)
+        shots = plan_micro_shots(timeline, art_style=req.visual_style, scenes=processed_scenes)
 
         # STEP 3 & 4: Free Visual Generation & Match Verification
         RENDER_STATUS[session_id] = {
@@ -203,8 +206,8 @@ async def render_pipeline(session_id: str, req: GenerateScenesRequest):
                     prompt=s.visual_prompt,
                     output_path=str(img_path),
                     seed=42 + idx,
-                    width=video_w,
-                    height=video_h,
+                    width=540,
+                    height=960,
                     keywords=s.keywords,
                     shot_id=idx
                 )

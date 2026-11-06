@@ -266,7 +266,14 @@ function setupEventListeners() {
         });
         const data = await res.json();
         activeSessionId = data.session_id;
-        currentScenes = data.scenes;
+
+        // Merge returned image_url back into currentScenes (API returns `visuals`, not `scenes`)
+        if (data.visuals) {
+          data.visuals.forEach(v => {
+            const sc = currentScenes.find(s => s.id === v.scene_id);
+            if (sc) sc.image_url = v.image_url;
+          });
+        }
         renderScenes();
       } catch (err) {
         alert("Failed to preview visuals: " + err.message);
@@ -408,14 +415,12 @@ async function finishRendering(result) {
 
   document.getElementById("btn-download-video").href = result.video_url;
 
-  const metaRes = await fetch("/api/generate-metadata", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(currentScenes)
-  });
-  const meta = await metaRes.json();
-  document.getElementById("meta-title").value = meta.title;
-  document.getElementById("meta-desc").value = meta.description;
+  // Generate metadata locally from scene texts (no server endpoint needed)
+  const allText = currentScenes.map(s => s.text).join(" ");
+  const firstWords = allText.split(" ").slice(0, 8).join(" ");
+  const tags = currentScenes.flatMap(s => (s.keywords || [])).filter((v, i, a) => a.indexOf(v) === i).slice(0, 10).map(k => "#" + k).join(" ");
+  document.getElementById("meta-title").value = firstWords + " 🔥 #Shorts";
+  document.getElementById("meta-desc").value = allText.slice(0, 200) + "\n\n" + (tags || "#Shorts #Viral #AIVideo");
 
   renderCard.classList.add("hidden");
   resultCard.classList.remove("hidden");

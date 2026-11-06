@@ -3,6 +3,7 @@ import os
 import json
 from typing import List, Dict, Any, Optional
 from config import VISUAL_STYLES
+from visual_engine import translate_to_english
 
 # Curated Viral Topic Presets with Hyper-Focused 1:1 Visual Match
 PRESET_SCRIPTS = {
@@ -353,16 +354,18 @@ class ScriptEngine:
     @staticmethod
     def _extract_focused_subject(sentence: str, context: str) -> str:
         """Extracts the primary concrete visual noun/action from a sentence."""
-        words = re.findall(r'[A-Za-z]{4,}', sentence)
+        en_sentence = translate_to_english(sentence)
+        words = re.findall(r'[A-Za-z]{3,}', en_sentence)
         stop_words = {"this", "that", "there", "these", "those", "about", "would", "could", "should",
                       "their", "which", "where", "before", "after", "through", "because", "someone",
-                      "whenever", "instead", "refuse", "people", "start", "every", "might", "already"}
+                      "whenever", "instead", "refuse", "people", "start", "every", "might", "already",
+                      "have", "with", "from", "into", "also", "they", "been", "said", "were"}
         meaningful = [w for w in words if w.lower() not in stop_words]
         if len(meaningful) >= 2:
             return f"{meaningful[0].title()} & {meaningful[1].title()}"
         elif meaningful:
             return meaningful[0].title()
-        return context.title() if context else "Cinematic Visual"
+        return context.title() if context else "Cinematic Scene"
 
     @staticmethod
     def _build_focused_1to1_prompt(
@@ -376,7 +379,8 @@ class ScriptEngine:
         Crafts an ultra-focused 1:1 visual match prompt:
         [Shot Framing] + [Direct Subject Action] + [Atmosphere] + [Style Suffix]
         """
-        clean_sentence = re.sub(r'["\']', '', sentence)
+        en_sentence = translate_to_english(sentence)
+        clean_sentence = re.sub(r'["\']', '', en_sentence)
         style_info = VISUAL_STYLES.get(style_key, VISUAL_STYLES["cinematic"])
         suffix = style_info.get("prompt_suffix", "")
 
@@ -392,11 +396,12 @@ class ScriptEngine:
     @staticmethod
     def _extract_keywords(text: str, context: str) -> List[str]:
         """Extracts key nouns and descriptive words for stock footage search."""
-        words = re.findall(r'[A-Za-z]{4,}', text.lower())
+        en_text = translate_to_english(text)
+        words = re.findall(r'[A-Za-z]{3,}', en_text.lower())
         stop_words = {"this", "that", "there", "these", "those", "about", "would", "could", "should",
                       "their", "which", "where", "before", "after", "through", "because", "someone",
-                      "whenever", "instead", "refuse", "people", "start"}
+                      "whenever", "instead", "refuse", "people", "start", "have", "with", "from", "also"}
         filtered = [w for w in words if w not in stop_words]
         if context:
             filtered.insert(0, context.lower())
-        return filtered[:3] if filtered else ["cinematic", "epic", "viral"]
+        return filtered[:3] if filtered else ["cinematic", "epic", "temple"]
